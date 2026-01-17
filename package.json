@@ -1,4 +1,10 @@
 {
+  "private": true,
   "name": "ts-playground",
-  "packageManager": "yarn@4.11.0"
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
 }
