@@ -1,7 +1,38 @@
 import amqp from 'amqplib';
-import type { UserCreated } from '@app/core';
+import { UserCreatedSchema } from './schemas/userCreated';
 
 async function main() {
+  const conn = await amqp.connect({
+    hostname: "localhost",
+    port: 5672,
+    username: "admin",
+    password: "admin"
+  });
+  const channel = await conn.createChannel();
+
+  const queue = "users";
+  await channel.assertQueue(queue);
+
+  channel.consume(queue, msg => {
+    if (!msg) return;
+
+    const parsed = UserCreatedSchema.safeParse(
+      JSON.parse(msg.content.toString())
+    );
+
+    if (!parsed.success) {
+      console.error("Invalid message", parsed.error);
+      channel.nack(msg, false, false);
+      return;
+    }
+
+    const event = parsed.data;
+    console.log("User created: ", event.payload.user);
+    channel.ack(msg);
+  })
+}
+
+/*async function main() {
   const conn = await amqp.connect({
     hostname: "localhost",
     port: 5672,
@@ -24,6 +55,6 @@ async function main() {
 
     channel.ack(msg);
   });
-}
+}*/
 
 main();
