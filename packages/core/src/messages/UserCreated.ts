@@ -1,8 +1,6 @@
 import type { User } from '../domain/User';
+import { MessageEnvelope } from './MessageEnvelope';
 
-export interface UserCreated {
-  type: "user.created";
-  payload: {
-    user: User;
-  };
-}
+export type UserCreated = MessageEnvelope<{
+  user: User
+}>
