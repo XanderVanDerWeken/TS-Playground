@@ -10,8 +10,13 @@ async function main() {
   });
   const channel = await conn.createChannel();
 
+  const exchange = "user.events";
   const queue = "users";
+
+  await channel.assertExchange(exchange, "fanout", { durable: true });
   await channel.assertQueue(queue);
+
+  await channel.bindQueue(queue, exchange, "");
 
   channel.consume(queue, msg => {
     if (!msg) return;
@@ -31,30 +36,5 @@ async function main() {
     channel.ack(msg);
   })
 }
-
-/*async function main() {
-  const conn = await amqp.connect({
-    hostname: "localhost",
-    port: 5672,
-    username: "admin",
-    password: "admin"
-  });
-  const channel = await conn.createChannel();
-
-  const queue = "users";
-  await channel.assertQueue(queue);
-
-  channel.consume(queue, msg => {
-    if (!msg) return;
-
-    const event = JSON.parse(msg.content.toString()) as UserCreated;
-
-    if (event.type === "user.created") {
-      console.log("User created: ", event.payload.user);
-    }
-
-    channel.ack(msg);
-  });
-}*/
 
 main();

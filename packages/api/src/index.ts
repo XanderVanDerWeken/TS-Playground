@@ -15,8 +15,10 @@ async function main() {
   });
   const channel = await conn.createChannel();
 
-  const queue = "users";
-  await channel.assertQueue(queue);
+  const exchange = "user.events";
+  await channel.assertExchange(exchange, "fanout", {
+    durable: true,
+  });
 
   server.post('/users', async (request, reply) => {
     const parsed = CreateUserSchema.safeParse(request.body);
@@ -39,7 +41,11 @@ async function main() {
       }
     };
 
-    channel.sendToQueue(queue, Buffer.from(JSON.stringify(event)));
+    channel.publish(
+      exchange,
+      "",
+      Buffer.from(JSON.stringify(event)),
+      { persistent: true });
 
     return reply.status(201).send(user);
   });
