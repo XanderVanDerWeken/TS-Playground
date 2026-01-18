@@ -1,29 +1,41 @@
 import amqp from 'amqplib';
-import type { UserCreated } from '@app/core';
+import { UserCreatedSchema } from './schemas/userCreated';
+import { config } from './config';
 
 async function main() {
   const conn = await amqp.connect({
-    hostname: "localhost",
-    port: 5672,
-    username: "admin",
-    password: "admin"
+    hostname: config.RABBITMQ_HOST,
+    port: config.RABBITMQ_PORT,
+    username: config.RABBITMQ_USERNAME,
+    password: config.RABBITMQ_PASSWORD,
   });
   const channel = await conn.createChannel();
 
+  const exchange = "user.events";
   const queue = "users";
+
+  await channel.assertExchange(exchange, "fanout", { durable: true });
   await channel.assertQueue(queue);
+
+  await channel.bindQueue(queue, exchange, "");
 
   channel.consume(queue, msg => {
     if (!msg) return;
 
-    const event = JSON.parse(msg.content.toString()) as UserCreated;
+    const parsed = UserCreatedSchema.safeParse(
+      JSON.parse(msg.content.toString())
+    );
 
-    if (event.type === "user.created") {
-      console.log("User created: ", event.payload.user);
+    if (!parsed.success) {
+      console.error("Invalid message", parsed.error);
+      channel.nack(msg, false, false);
+      return;
     }
 
+    const event = parsed.data;
+    console.log("User created: ", event.payload.user);
     channel.ack(msg);
-  });
+  })
 }
 
 main();
