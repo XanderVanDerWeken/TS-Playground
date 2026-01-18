@@ -1,12 +1,13 @@
 import amqp from 'amqplib';
 import { UserCreatedSchema } from './schemas/userCreated';
+import { config } from './config';
 
 async function main() {
   const conn = await amqp.connect({
-    hostname: "localhost",
-    port: 5672,
-    username: "admin",
-    password: "admin"
+    hostname: config.RABBITMQ_HOST,
+    port: config.RABBITMQ_PORT,
+    username: config.RABBITMQ_USERNAME,
+    password: config.RABBITMQ_PASSWORD,
   });
   const channel = await conn.createChannel();
 

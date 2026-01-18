@@ -3,15 +3,16 @@ import { randomUUID } from 'crypto';
 import type { UserCreated } from '@app/core';
 import Fastify from 'fastify';
 import { CreateUserSchema } from './schemas/createUser';
+import { config } from './config';
 
 const server = Fastify({ logger: true });
 
 async function main() {
   const conn = await amqp.connect({
-    hostname: "localhost",
-    port: 5672,
-    username: "admin",
-    password: "admin"
+    hostname: config.RABBITMQ_HOST,
+    port: config.RABBITMQ_PORT,
+    username: config.RABBITMQ_USERNAME,
+    password: config.RABBITMQ_PASSWORD,
   });
   const channel = await conn.createChannel();
 
@@ -51,7 +52,7 @@ async function main() {
   });
 
   await server.listen({
-    port: 3000,
+    port: config.HTTP_PORT,
   })
 }
 
